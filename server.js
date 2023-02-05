@@ -14,64 +14,68 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(
-    cors({
-      origin: "*",
-    })
-  );
+  cors({
+    origin: "*",
+  })
+);
 
-  let transporter = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: process.env.SEND_EMAIL,
-      pass: process.env.PASS,
+let transporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: process.env.SEND_EMAIL,
+    pass: process.env.PASS,
+  },
+});
+
+transporter.use(
+  "compile",
+  hbs({
+    viewEngine: {
+      extname: ".handlebars", // handlebars extension
+      layoutsDir: "views/", // location of handlebars templates
+      defaultLayout: "index", // name of main template
+      partialsDir: "views/", // location of your subtemplates aka. header, footer etc
     },
-  });
-  
-  transporter.use(
-    "compile",
-    hbs({
-      viewEngine: {
-        extname: ".handlebars", // handlebars extension
-        layoutsDir: "views/", // location of handlebars templates
-        defaultLayout: "index", // name of main template
-        partialsDir: "views/", // location of your subtemplates aka. header, footer etc
+    viewPath: "views",
+    extName: ".handlebars",
+  })
+);
+
+app.post("/contactemail", (req, res) => {
+  let mailOptions = {
+    from: process.env.SEND_EMAIL,
+    to: process.env.TO_MAIL,
+    subject: `${req.body.name} sent a message`,
+    template: "index",
+    context: {
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+      message: req.body.message,
+    },
+    attachments: [
+      {
+        filename: "homedezlogo.png",
+        path: __dirname + "/images/homedezlogo.png",
+        cid: "logo",
       },
-      viewPath: "views",
-      extName: ".handlebars",
-    })
-  );
-  
-  app.post("/contactemail", (req, res) => {
-    let mailOptions = {
-      from: process.env.SEND_EMAIL,
-      to: process.env.TO_MAIL,
-      subject: `${req.body.name} sent a message`,
-      template: "index",
-      context: {
-        name: req.body.name,
-        email: req.body.email,
-        phone: req.body.phone,
-        message: req.body.message,
-      },
-      attachments: [
-        {
-          filename: "homedezlogo.png",
-          path: __dirname + "/images/homedezlogo.png",
-          cid: "logo",
-        },
-      ],
-    };
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return console.log(error);
-      }
-      // console.log("Message sent: %s", info.messageId);
-    });
-  
-    // console.log(req.body);
-    res.status(200).json("success");
+    ],
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return console.log(error);
+    }
+    // console.log("Message sent: %s", info.messageId);
   });
-  
-  app.listen(process.env.PORT || port, () =>
-    console.log(`Example app listening at http://localhost:${port}`)
-  );
+
+  // console.log(req.body);
+  res.status(200).json("success");
+});
+
+app.get("/", (req, res) => {
+  res.send("Hey, API is running 🥳");
+});
+
+app.listen(process.env.PORT || port, () =>
+  console.log(`Example app listening at http://localhost:${port}`)
+);
